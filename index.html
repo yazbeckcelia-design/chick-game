@@ -276,6 +276,8 @@
             <line x1="135" y1="72" x2="148" y2="72" stroke="#0891b2" stroke-width="3" />
           </g>
 
+          <!-- HIGH-LEVEL ACCESSORIES -->
+
           <!-- Diamond Crown (1,000 Pets) -->
           <g id="accDiamondCrown" class="hidden">
             <polygon points="75,36 82,14 92,26 100,8 108,26 118,14 125,36" fill="#38bdf8" stroke="#0284c7" stroke-width="2" />
@@ -400,7 +402,7 @@
   </footer>
 
   <script>
-    // Game State
+    // Game State variables
     let petCount = 0;
     let isSoundMuted = false;
     let audioCtx = null;
@@ -408,6 +410,37 @@
     let activeAccessory = 'none';
     let isPetting = false;
     let lastPetTime = 0;
+
+    // Load saved data from localStorage
+    function loadSavedGame() {
+      const savedCount = localStorage.getItem('chickPetCount');
+      if (savedCount !== null) {
+        petCount = parseInt(savedCount, 10) || 0;
+      }
+
+      const savedBreed = localStorage.getItem('chickBreed');
+      if (savedBreed && breedConfigs[savedBreed]) {
+        currentBreed = savedBreed;
+      }
+
+      const savedMute = localStorage.getItem('chickSoundMuted');
+      if (savedMute !== null) {
+        isSoundMuted = savedMute === 'true';
+      }
+
+      const savedAccessory = localStorage.getItem('chickAccessory');
+      if (savedAccessory) {
+        activeAccessory = savedAccessory;
+      }
+    }
+
+    // Save game state to localStorage
+    function saveGame() {
+      localStorage.setItem('chickPetCount', petCount);
+      localStorage.setItem('chickBreed', currentBreed);
+      localStorage.setItem('chickSoundMuted', isSoundMuted);
+      localStorage.setItem('chickAccessory', activeAccessory);
+    }
 
     // Breed Configurations
     const breedConfigs = {
@@ -549,6 +582,12 @@
 
     soundToggleBtn.addEventListener('click', () => {
       isSoundMuted = !isSoundMuted;
+      updateSoundUI();
+      saveGame();
+      if (!isSoundMuted) playChirpSound();
+    });
+
+    function updateSoundUI() {
       if (isSoundMuted) {
         soundIcon.textContent = '🔇';
         soundLabel.textContent = 'Muted';
@@ -557,15 +596,12 @@
         soundIcon.textContent = '🔊';
         soundLabel.textContent = 'Sound On';
         soundToggleBtn.classList.replace('bg-gray-100', 'bg-yellow-100');
-        playChirpSound();
       }
-    });
+    }
 
     // Select Breed Function
-    function selectBreed(breed) {
+    function selectBreed(breed, playSound = true) {
       currentBreed = breed;
-      localStorage.setItem('chickBreed', breed);
-
       const config = breedConfigs[breed];
 
       chickBody.setAttribute('fill', config.bodyFill);
@@ -596,7 +632,8 @@
       }
 
       speechBubble.textContent = `Changed to ${breed.toUpperCase()} chick! 🐥`;
-      playChirpSound();
+      if (playSound) playChirpSound();
+      saveGame();
     }
 
     // Handle Petting Interaction
@@ -609,7 +646,8 @@
 
       petCount++;
       petCountEl.textContent = petCount.toLocaleString();
-      localStorage.setItem('chickPetCount', petCount);
+
+      saveGame();
 
       heartIcon.classList.remove('pulse-heart');
       void heartIcon.offsetWidth;
@@ -694,42 +732,119 @@
 
     // Update Progress & Unlock Accessories
     function updateProgress(isInitialLoad = false) {
+      petCountEl.textContent = petCount.toLocaleString();
+
       let percent = Math.min((petCount / 5000) * 100, 100);
       progressBar.style.width = `${Math.max(percent, 1)}%`;
 
-      const silent = isInitialLoad;
-
-      // Unlock all items earned up to the current pet count
-      if (petCount >= 10) unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', !silent);
-      if (petCount >= 25) unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', !silent);
-      if (petCount >= 50) unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', !silent);
-      if (petCount >= 100) unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', !silent);
-      if (petCount >= 150) unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', !silent);
-      if (petCount >= 200) unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', !silent);
-      if (petCount >= 300) unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', !silent);
-      if (petCount >= 500) unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', !silent);
-      if (petCount >= 1000) unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', !silent);
-      if (petCount >= 2000) unlockAccessory('btnAccAstronaut', 'lblAstronaut', 'Unlocked', !silent);
-      if (petCount >= 3000) unlockAccessory('btnAccUnicorn', 'lblUnicorn', 'Unlocked', !silent);
-      if (petCount >= 5000) unlockAccessory('btnAccHalo', 'lblHalo', 'Unlocked', !silent);
-
-      // Level title labels
-      if (petCount < 10) levelLabel.textContent = "Level 1: Happy Chick 🐥";
-      else if (petCount < 25) levelLabel.textContent = "Level 2: Flower Power 🌸";
-      else if (petCount < 50) levelLabel.textContent = "Level 3: Dapper Bowtie 🎀";
-      else if (petCount < 100) levelLabel.textContent = "Level 4: Royal Crown 👑";
-      else if (petCount < 150) levelLabel.textContent = "Level 5: Cool Glasses 🕶️";
-      else if (petCount < 200) levelLabel.textContent = "Level 6: Fancy Top Hat 🎩";
-      else if (petCount < 300) levelLabel.textContent = "Level 7: Music Headphones 🎧";
-      else if (petCount < 500) levelLabel.textContent = "Level 8: Wizard Chick 🧙‍♂️";
-      else if (petCount < 1000) levelLabel.textContent = "Level 9: Master Goggles 🥽";
-      else if (petCount < 2000) levelLabel.textContent = "Level 10: Diamond Royalty 💎";
-      else if (petCount < 3000) levelLabel.textContent = "Level 11: Space Explorer 🚀";
-      else if (petCount < 5000) levelLabel.textContent = "Level 12: Magical Unicorn 🦄";
-      else levelLabel.textContent = "Level 13: Divine Angel 😇";
+      if (petCount < 10) {
+        levelLabel.textContent = "Level 1: Happy Chick 🐥";
+      } else if (petCount < 25) {
+        levelLabel.textContent = "Level 2: Flower Power 🌸";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+      } else if (petCount < 50) {
+        levelLabel.textContent = "Level 3: Dapper Bowtie 🎀";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+      } else if (petCount < 100) {
+        levelLabel.textContent = "Level 4: Royal Crown 👑";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+      } else if (petCount < 150) {
+        levelLabel.textContent = "Level 5: Cool Glasses 🕶️";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+      } else if (petCount < 200) {
+        levelLabel.textContent = "Level 6: Fancy Top Hat 🎩";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+      } else if (petCount < 300) {
+        levelLabel.textContent = "Level 7: Music Headphones 🎧";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+      } else if (petCount < 500) {
+        levelLabel.textContent = "Level 8: Wizard Chick 🧙‍♂️";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+      } else if (petCount < 1000) {
+        levelLabel.textContent = "Level 9: Master Goggles 🥽";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', isInitialLoad);
+      } else if (petCount < 2000) {
+        levelLabel.textContent = "Level 10: Diamond Royalty 💎";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', isInitialLoad);
+      } else if (petCount < 3000) {
+        levelLabel.textContent = "Level 11: Space Explorer 🚀";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccAstronaut', 'lblAstronaut', 'Unlocked', isInitialLoad);
+      } else if (petCount < 5000) {
+        levelLabel.textContent = "Level 12: Magical Unicorn 🦄";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccAstronaut', 'lblAstronaut', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccUnicorn', 'lblUnicorn', 'Unlocked', isInitialLoad);
+      } else {
+        levelLabel.textContent = "Level 13: Divine Angel 😇";
+        unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccAstronaut', 'lblAstronaut', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccUnicorn', 'lblUnicorn', 'Unlocked', isInitialLoad);
+        unlockAccessory('btnAccHalo', 'lblHalo', 'Unlocked', isInitialLoad);
+      }
     }
 
-    function unlockAccessory(btnId, lblId, labelText, shouldPlaySound = true) {
+    function unlockAccessory(btnId, lblId, labelText, isInitialLoad = false) {
       const btn = document.getElementById(btnId);
       const lbl = document.getElementById(lblId);
 
@@ -738,14 +853,13 @@
         btn.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-100', 'border-gray-200');
         btn.classList.add('bg-amber-100', 'border-amber-300', 'hover:bg-amber-200', 'text-amber-900');
         if (lbl) lbl.textContent = labelText;
-        if (shouldPlaySound) playUnlockSound();
+        if (!isInitialLoad) playUnlockSound();
       }
     }
 
     // Set Active Accessory
-    function setAccessory(accName) {
+    function setAccessory(accName, playSound = true) {
       activeAccessory = accName;
-      localStorage.setItem('chickAccessory', accName);
 
       const accIds = [
         'accFlower', 'accBow', 'accCrown', 'accGlasses', 
@@ -811,7 +925,8 @@
         speechBubble.textContent = "Natural style! 🐥";
       }
 
-      playChirpSound();
+      if (playSound) playChirpSound();
+      saveGame();
     }
 
     // Event Listeners for Petting
@@ -846,37 +961,12 @@
       isPetting = false;
     });
 
-    // Load saved game state from localStorage on page launch
-    function loadSavedGame() {
-      // Restore Pet Count
-      const savedCount = localStorage.getItem('chickPetCount');
-      if (savedCount !== null) {
-        petCount = parseInt(savedCount, 10) || 0;
-        petCountEl.textContent = petCount.toLocaleString();
-      }
-
-      // Restore Selected Breed
-      const savedBreed = localStorage.getItem('chickBreed');
-      if (savedBreed && breedConfigs[savedBreed]) {
-        selectBreed(savedBreed);
-      } else {
-        selectBreed('yellow');
-      }
-
-      // Unlock all earned achievements/accessories quietly
-      updateProgress(true);
-
-      // Restore Active Accessory
-      const savedAcc = localStorage.getItem('chickAccessory');
-      if (savedAcc) {
-        setAccessory(savedAcc);
-      } else {
-        setAccessory('none');
-      }
-    }
-
-    // Launch Game!
+    // Initialize game state on load
     loadSavedGame();
+    updateSoundUI();
+    selectBreed(currentBreed, false);
+    updateProgress(true);
+    setAccessory(activeAccessory, false);
 
   </script>
 </body>
