@@ -2,252 +2,882 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet The Chick Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pet the Chick 🐥</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
-      background: #fffdf0;
-      padding: 20px;
-      margin: 0;
+      touch-action: manipulation;
       user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
     }
 
-    h1 {
-      color: #333;
-      margin-bottom: 10px;
+    /* Floating heart and sparkle animations */
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(0.6) rotate(0deg);
+      }
+      50% {
+        transform: translate(calc(-50% + (var(--dx) * 1px)), -60px) scale(1.2) rotate(var(--rot));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + (var(--dx) * 2px)), -120px) scale(0.8) rotate(calc(var(--rot) * 2));
+      }
     }
 
-    .chick-selector {
-      margin-bottom: 15px;
-    }
-
-    .chick-btn {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      border-radius: 20px;
-      border: 2px solid #ccc;
-      cursor: pointer;
-      background: white;
-      font-weight: bold;
-      transition: all 0.2s ease;
-    }
-
-    .chick-btn.active {
-      background: #ffe066;
-      border-color: #f59f00;
-      transform: scale(1.05);
-    }
-
-    #scoreDisplay {
-      font-size: 24px;
-      color: #f59f00;
-      margin: 10px 0;
-    }
-
-    /* Interactive Chick Container */
-    #chickContainer {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-      margin: 20px auto;
-      padding: 20px;
-    }
-
-    #chickSprite {
-      font-size: 110px;
-      transition: transform 0.1s ease;
-      display: inline-block;
-    }
-
-    #accessoryLayer {
+    .particle {
       position: absolute;
-      top: 5px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 45px;
       pointer-events: none;
+      animation: floatUp 1.2s ease-out forwards;
+      font-size: 1.8rem;
+      z-index: 50;
     }
 
-    /* Accessory Grid */
-    .accessories-title {
-      margin-top: 25px;
-      color: #444;
+    /* Gentle breathe animation for idle chick */
+    @keyframes idleBreathe {
+      0%, 100% { transform: translateY(0) scale(1, 1); }
+      50% { transform: translateY(-4px) scale(1.02, 0.98); }
     }
 
-    #accessoriesGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 10px;
-      max-width: 600px;
-      margin: 15px auto;
-      max-height: 320px;
-      overflow-y: auto;
-      border: 2px solid #ffe066;
-      padding: 12px;
-      border-radius: 16px;
-      background: white;
+    .chick-idle {
+      animation: idleBreathe 3s ease-in-out infinite;
     }
 
-    .acc-card {
-      border: 2px solid #eee;
-      padding: 10px;
-      border-radius: 12px;
-      text-align: center;
-      transition: all 0.2s ease;
+    /* Squash and stretch when petted */
+    .chick-pet {
+      transform: scale(1.12, 0.88) translateY(10px) !important;
+      transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    .acc-card.unlocked {
-      background: #e6fcf5;
-      border-color: #20c997;
-      cursor: pointer;
+    .chick-release {
+      transform: scale(0.95, 1.05) translateY(-6px);
+      transition: transform 0.15s ease-out;
     }
 
-    .acc-card.locked {
-      opacity: 0.4;
-      background: #f8f9fa;
+    /* Wing Wiggle */
+    @keyframes wingWiggleLeft {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-25deg); }
+    }
+    @keyframes wingWiggleRight {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(25deg); }
     }
 
-    .acc-card.equipped {
-      border-color: #339af0;
-      background: #e7f5ff;
-      box-shadow: 0 0 8px rgba(51, 154, 240, 0.4);
+    .wiggle-wing-left {
+      animation: wingWiggleLeft 0.25s ease-in-out 2;
+      transform-origin: top right;
+    }
+    .wiggle-wing-right {
+      animation: wingWiggleRight 0.25s ease-in-out 2;
+      transform-origin: top left;
+    }
+
+    /* Heart beat pulse for counter */
+    @keyframes heartBeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); }
+    }
+    .pulse-heart {
+      animation: heartBeat 0.3s ease-out;
+    }
+
+    /* Custom scrollbar for accessories on small screens */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
   </style>
 </head>
-<body>
+<body class="bg-gradient-to-b from-amber-100 via-yellow-50 to-orange-100 min-h-screen flex flex-col justify-between items-center overflow-x-hidden p-3 sm:p-4">
 
-  <h1>🐣 Pet The Chick Studio 🐥</h1>
+  <!-- Header & Stats -->
+  <header class="w-full max-w-lg flex justify-between items-center bg-white/85 backdrop-blur-sm rounded-3xl p-3 sm:p-4 shadow-lg border-2 border-yellow-200">
+    <div class="flex items-center gap-3">
+      <div id="heartIcon" class="text-3xl">❤️</div>
+      <div>
+        <div class="text-xs text-amber-700 font-bold uppercase tracking-wider">Total Pets</div>
+        <div id="petCount" class="text-2xl font-black text-amber-900">0</div>
+      </div>
+    </div>
 
-  <!-- Select Chick -->
-  <div class="chick-selector">
-    <button class="chick-btn active" id="btnOreo" onclick="selectChick('Oreo')">🖤 Oreo</button>
-    <button class="chick-btn" id="btnSnowy" onclick="selectChick('Snowy')">🤍 Snowy</button>
+    <!-- Mute / Audio Toggle Button -->
+    <button id="soundToggle" class="bg-yellow-100 hover:bg-yellow-200 border-2 border-yellow-300 text-amber-800 px-3 py-2 rounded-2xl flex items-center gap-2 font-bold text-xs sm:text-sm shadow-sm transition active:scale-95">
+      <span id="soundIcon">🔊</span>
+      <span id="soundLabel">Sound On</span>
+    </button>
+  </header>
+
+  <!-- Happiness Progress Bar -->
+  <div class="w-full max-w-lg my-2 px-1">
+    <div class="flex justify-between items-center text-xs font-bold text-amber-800 mb-1">
+      <span id="breedNameTag">Classic Yellow Chick 🐥</span>
+      <span id="levelLabel">Level 1: Happy Chick</span>
+    </div>
+    <div class="w-full bg-yellow-200/80 rounded-full h-4 p-0.5 border border-yellow-300 shadow-inner">
+      <div id="progressBar" class="bg-gradient-to-r from-yellow-400 via-amber-500 to-pink-500 h-full rounded-full transition-all duration-300" style="width: 1%;"></div>
+    </div>
   </div>
 
-  <h2 id="scoreDisplay">Oreo's Points: 0</h2>
-
-  <!-- Petting Area -->
-  <div id="chickContainer" onclick="petChick()">
-    <div id="accessoryLayer"></div>
-    <div id="chickSprite">🐥</div>
+  <!-- Breed Selection Bar -->
+  <div class="w-full max-w-lg bg-white/70 backdrop-blur-sm rounded-2xl p-2 border border-yellow-200 flex justify-around items-center my-1 gap-1">
+    <button onclick="selectBreed('yellow')" id="btnBreedYellow" class="breed-btn bg-yellow-200 border-2 border-yellow-400 px-2.5 py-1 rounded-xl text-xs font-bold text-amber-900 flex items-center gap-1 transition active:scale-95">
+      <span>🐥</span> Yellow
+    </button>
+    <button onclick="selectBreed('black')" id="btnBreedBlack" class="breed-btn bg-gray-200 border-2 border-gray-300 px-2.5 py-1 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-1 transition active:scale-95">
+      <span>🖤</span> Black
+    </button>
+    <button onclick="selectBreed('gray')" id="btnBreedGray" class="breed-btn bg-gray-200 border-2 border-gray-300 px-2.5 py-1 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-1 transition active:scale-95">
+      <span>🩶</span> Gray
+    </button>
+    <button onclick="selectBreed('white')" id="btnBreedWhite" class="breed-btn bg-gray-200 border-2 border-gray-300 px-2.5 py-1 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-1 transition active:scale-95">
+      <span>⚪</span> White
+    </button>
   </div>
 
-  <h3 class="accessories-title">🎒 Milestone Accessories (30 Unlocks)</h3>
-  <div id="accessoriesGrid"></div>
+  <!-- Main Play Area: Chick & Nest -->
+  <main class="relative w-full max-w-lg flex-1 flex flex-col items-center justify-center my-2">
+    
+    <!-- Floating particles container -->
+    <div id="particleContainer" class="absolute inset-0 pointer-events-none z-30"></div>
+
+    <!-- Speech / Expression Bubble -->
+    <div id="speechBubble" class="absolute top-0 bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-amber-200 text-amber-900 font-bold text-xs sm:text-sm transition-all duration-300 opacity-90 scale-100 z-20">
+      Pet me! Peep! 🐥
+    </div>
+
+    <!-- Nest Base -->
+    <div class="relative flex items-center justify-center mt-6">
+      <!-- Straw Nest Graphic -->
+      <div class="absolute -bottom-6 w-72 h-28 bg-gradient-to-t from-amber-700 via-yellow-600 to-amber-500 rounded-full border-4 border-amber-800/40 shadow-xl flex items-center justify-center overflow-hidden">
+        <div class="w-full h-full opacity-30 bg-[radial-gradient(#fef08a_20%,transparent_20%)] [background-size:12px_12px]"></div>
+      </div>
+
+      <!-- Chick SVG Interactive Area -->
+      <div id="chickContainer" class="relative z-10 w-64 h-64 cursor-pointer chick-idle transition-transform duration-100 select-none">
+        <svg id="chickSvg" viewBox="0 0 200 200" class="w-full h-full drop-shadow-md">
+          
+          <!-- Feet -->
+          <g id="feet" stroke="#f97316" stroke-width="4" stroke-linecap="round">
+            <path d="M 75,175 L 75,188 M 75,188 L 67,192 M 75,188 L 75,194 M 75,188 L 83,192" />
+            <path d="M 125,175 L 125,188 M 125,188 L 117,192 M 125,188 L 125,194 M 125,188 L 133,192" />
+          </g>
+
+          <!-- Left Wing -->
+          <g id="leftWing" class="transition-transform">
+            <path id="leftWingPath" d="M 45,100 C 25,110 25,135 48,140 C 58,130 55,110 45,100 Z" fill="#fde047" stroke="#eab308" stroke-width="3" />
+          </g>
+
+          <!-- Right Wing -->
+          <g id="rightWing" class="transition-transform">
+            <path id="rightWingPath" d="M 155,100 C 175,110 175,135 152,140 C 142,130 145,110 155,100 Z" fill="#fde047" stroke="#eab308" stroke-width="3" />
+          </g>
+
+          <!-- Main Body -->
+          <ellipse id="chickBody" cx="100" cy="115" rx="60" ry="58" fill="#fde047" stroke="#eab308" stroke-width="4" />
+          
+          <!-- Fluffy Head -->
+          <circle id="chickHead" cx="100" cy="75" r="48" fill="#fde047" stroke="#eab308" stroke-width="4" />
+          
+          <!-- Feather Tuft on Head -->
+          <path id="chickTuft" d="M 96,28 C 92,15 102,12 100,28 C 104,18 112,18 104,30 Z" fill="#fde047" stroke="#eab308" stroke-width="3" stroke-linejoin="round" />
+
+          <!-- Blush Cheeks -->
+          <ellipse id="blushLeft" cx="68" cy="84" rx="9" ry="6" fill="#f43f5e" opacity="0.35" />
+          <ellipse id="blushRight" cx="132" cy="84" rx="9" ry="6" fill="#f43f5e" opacity="0.35" />
+
+          <!-- Normal Eyes -->
+          <g id="eyesNormal">
+            <circle cx="78" cy="72" r="6" fill="#1e293b" />
+            <circle cx="76" cy="70" r="2" fill="#ffffff" />
+            <circle cx="122" cy="72" r="6" fill="#1e293b" />
+            <circle cx="120" cy="70" r="2" fill="#ffffff" />
+          </g>
+
+          <!-- Happy Closed Eyes (shown when petted) -->
+          <g id="eyesHappy" class="hidden" stroke="#1e293b" stroke-width="3.5" stroke-linecap="round" fill="none">
+            <path d="M 72,74 Q 78,66 84,74" />
+            <path d="M 116,74 Q 122,66 128,74" />
+          </g>
+
+          <!-- Beak -->
+          <path id="beak" d="M 92,78 Q 100,72 108,78 Q 100,94 92,78 Z" fill="#f97316" stroke="#ea580c" stroke-width="2.5" stroke-linejoin="round" />
+
+          <!-- ACCESSORIES -->
+
+          <!-- Flower (10) -->
+          <g id="accFlower" class="hidden">
+            <circle cx="128" cy="42" r="7" fill="#ec4899" />
+            <circle cx="122" cy="38" r="5" fill="#f472b6" />
+            <circle cx="134" cy="38" r="5" fill="#f472b6" />
+            <circle cx="122" cy="46" r="5" fill="#f472b6" />
+            <circle cx="134" cy="46" r="5" fill="#f472b6" />
+            <circle cx="128" cy="42" r="4" fill="#fef08a" />
+          </g>
+
+          <!-- Bowtie (25) -->
+          <g id="accBow" class="hidden">
+            <polygon points="86,120 100,126 86,132" fill="#ef4444" />
+            <polygon points="114,120 100,126 114,132" fill="#ef4444" />
+            <circle cx="100" cy="126" r="4" fill="#dc2626" />
+          </g>
+
+          <!-- Crown (50) -->
+          <g id="accCrown" class="hidden">
+            <polygon points="80,36 86,18 94,28 100,14 106,28 114,18 120,36" fill="#eab308" stroke="#ca8a04" stroke-width="2" />
+            <circle cx="86" cy="18" r="2.5" fill="#ef4444" />
+            <circle cx="100" cy="14" r="3" fill="#3b82f6" />
+            <circle cx="114" cy="18" r="2.5" fill="#ef4444" />
+          </g>
+
+          <!-- Cool Sunglasses (100) -->
+          <g id="accGlasses" class="hidden">
+            <path d="M 66,70 L 90,70 L 86,82 L 70,82 Z" fill="#0f172a" />
+            <path d="M 110,70 L 134,70 L 130,82 L 114,82 Z" fill="#0f172a" />
+            <line x1="90" y1="73" x2="110" y2="73" stroke="#0f172a" stroke-width="3" />
+            <line x1="66" y1="72" x2="56" y2="68" stroke="#0f172a" stroke-width="2.5" />
+            <line x1="134" y1="72" x2="144" y2="68" stroke="#0f172a" stroke-width="2.5" />
+          </g>
+
+          <!-- Fancy Top Hat (150) -->
+          <g id="accTopHat" class="hidden">
+            <rect x="70" y="32" width="60" height="6" rx="3" fill="#1e293b" />
+            <rect x="78" y="8" width="44" height="25" rx="3" fill="#1e293b" />
+            <rect x="78" y="27" width="44" height="6" fill="#dc2626" />
+          </g>
+
+          <!-- Headphones (200) -->
+          <g id="accHeadphones" class="hidden">
+            <path d="M 52,70 C 50,20 150,20 148,70" fill="none" stroke="#2563eb" stroke-width="6" stroke-linecap="round" />
+            <rect x="46" y="60" width="12" height="24" rx="5" fill="#1d4ed8" />
+            <rect x="142" y="60" width="12" height="24" rx="5" fill="#1d4ed8" />
+          </g>
+
+          <!-- Wizard Hat (300) -->
+          <g id="accWizard" class="hidden">
+            <path d="M 60,38 Q 100,34 140,38 Q 100,28 60,38 Z" fill="#6b21a8" />
+            <polygon points="70,36 100,-2 130,36" fill="#7e22ce" />
+            <polygon points="100,10 96,18 104,18" fill="#facc15" />
+            <circle cx="112" cy="24" r="2" fill="#facc15" />
+          </g>
+
+          <!-- Swimming Goggles (500) -->
+          <g id="accGoggles" class="hidden">
+            <circle cx="78" cy="72" r="13" fill="#06b6d4" fill-opacity="0.6" stroke="#0891b2" stroke-width="3" />
+            <circle cx="122" cy="72" r="13" fill="#06b6d4" fill-opacity="0.6" stroke="#0891b2" stroke-width="3" />
+            <line x1="91" y1="72" x2="109" y2="72" stroke="#0891b2" stroke-width="4" />
+            <line x1="52" y1="72" x2="65" y2="72" stroke="#0891b2" stroke-width="3" />
+            <line x1="135" y1="72" x2="148" y2="72" stroke="#0891b2" stroke-width="3" />
+          </g>
+
+          <!-- Diamond Crown (1,000 Pets) -->
+          <g id="accDiamondCrown" class="hidden">
+            <polygon points="75,36 82,14 92,26 100,8 108,26 118,14 125,36" fill="#38bdf8" stroke="#0284c7" stroke-width="2" />
+            <polygon points="82,14 92,26 100,8" fill="#7dd3fc" />
+            <polygon points="100,8 108,26 118,14" fill="#bae6fd" />
+            <circle cx="82" cy="14" r="3" fill="#ffffff" />
+            <circle cx="100" cy="8" r="3.5" fill="#ffffff" />
+            <circle cx="118" cy="14" r="3" fill="#ffffff" />
+          </g>
+
+          <!-- Astronaut Helmet (2,000 Pets) -->
+          <g id="accAstronaut" class="hidden">
+            <circle cx="100" cy="72" r="50" fill="none" stroke="#e2e8f0" stroke-width="8" />
+            <path d="M 62,65 Q 100,50 138,65 Q 138,90 100,92 Q 62,90 62,65 Z" fill="#38bdf8" opacity="0.75" stroke="#0284c7" stroke-width="2" />
+            <ellipse cx="80" cy="62" rx="10" ry="4" fill="#ffffff" opacity="0.6" transform="rotate(-15 80 62)" />
+          </g>
+
+          <!-- Unicorn Horn (3,000 Pets) -->
+          <g id="accUnicorn" class="hidden">
+            <polygon points="94,36 100,-10 106,36" fill="#f472b6" stroke="#db2777" stroke-width="2" />
+            <path d="M 96,26 L 104,22 M 95,14 L 103,10 M 97,2 L 102,-2" stroke="#fef08a" stroke-width="3" stroke-linecap="round" />
+            <circle cx="100" cy="-12" r="3" fill="#ffffff" />
+          </g>
+
+          <!-- Angel Halo (5,000 Pets) -->
+          <g id="accHalo" class="hidden">
+            <ellipse cx="100" cy="18" rx="38" ry="10" fill="none" stroke="#facc15" stroke-width="6" />
+            <ellipse cx="100" cy="18" rx="38" ry="10" fill="none" stroke="#fef08a" stroke-width="3" />
+            <circle cx="70" cy="18" r="2" fill="#ffffff" />
+            <circle cx="130" cy="18" r="2" fill="#ffffff" />
+          </g>
+
+        </svg>
+      </div>
+    </div>
+  </main>
+
+  <!-- Wardrobe & Accessory Selector -->
+  <footer class="w-full max-w-lg bg-white/90 backdrop-blur-sm rounded-3xl p-3 shadow-lg border-2 border-yellow-200">
+    <div class="text-xs font-bold text-amber-800 mb-2 text-center uppercase tracking-wider">
+      Chick Wardrobe & Collectibles 🎀
+    </div>
+    <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-44 overflow-y-auto p-1 no-scrollbar">
+      <!-- None Button -->
+      <button id="btnAccNone" onclick="setAccessory('none')" class="acc-btn bg-amber-100 border-2 border-amber-300 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-amber-900 transition active:scale-95">
+        <span class="text-lg">🐣</span>
+        <span class="text-[10px]">None</span>
+      </button>
+
+      <!-- Flower Button (10) -->
+      <button id="btnAccFlower" onclick="setAccessory('flower')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🌸</span>
+        <span class="text-[10px]" id="lblFlower">10 pets</span>
+      </button>
+
+      <!-- Bow Button (25) -->
+      <button id="btnAccBow" onclick="setAccessory('bow')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🎀</span>
+        <span class="text-[10px]" id="lblBow">25 pets</span>
+      </button>
+
+      <!-- Crown Button (50) -->
+      <button id="btnAccCrown" onclick="setAccessory('crown')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">👑</span>
+        <span class="text-[10px]" id="lblCrown">50 pets</span>
+      </button>
+
+      <!-- Glasses Button (100) -->
+      <button id="btnAccGlasses" onclick="setAccessory('glasses')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🕶️</span>
+        <span class="text-[10px]" id="lblGlasses">100 pets</span>
+      </button>
+
+      <!-- Top Hat Button (150) -->
+      <button id="btnAccTopHat" onclick="setAccessory('topHat')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🎩</span>
+        <span class="text-[10px]" id="lblTopHat">150 pets</span>
+      </button>
+
+      <!-- Headphones Button (200) -->
+      <button id="btnAccHeadphones" onclick="setAccessory('headphones')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🎧</span>
+        <span class="text-[10px]" id="lblHeadphones">200 pets</span>
+      </button>
+
+      <!-- Wizard Hat Button (300) -->
+      <button id="btnAccWizard" onclick="setAccessory('wizard')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🧙‍♂️</span>
+        <span class="text-[10px]" id="lblWizard">300 pets</span>
+      </button>
+
+      <!-- Goggles Button (500) -->
+      <button id="btnAccGoggles" onclick="setAccessory('goggles')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🥽</span>
+        <span class="text-[10px]" id="lblGoggles">500 pets</span>
+      </button>
+
+      <!-- Diamond Crown Button (1,000) -->
+      <button id="btnAccDiamondCrown" onclick="setAccessory('diamondCrown')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">💎</span>
+        <span class="text-[10px]" id="lblDiamondCrown">1,000 pets</span>
+      </button>
+
+      <!-- Astronaut Helmet Button (2,000) -->
+      <button id="btnAccAstronaut" onclick="setAccessory('astronaut')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🚀</span>
+        <span class="text-[10px]" id="lblAstronaut">2,000 pets</span>
+      </button>
+
+      <!-- Unicorn Horn Button (3,000) -->
+      <button id="btnAccUnicorn" onclick="setAccessory('unicorn')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">🦄</span>
+        <span class="text-[10px]" id="lblUnicorn">3,000 pets</span>
+      </button>
+
+      <!-- Angel Halo Button (5,000) -->
+      <button id="btnAccHalo" onclick="setAccessory('halo')" class="acc-btn bg-gray-100 border-2 border-gray-200 p-2 rounded-2xl flex flex-col items-center justify-center text-xs font-bold text-gray-400 opacity-60 cursor-not-allowed transition" disabled>
+        <span class="text-lg">😇</span>
+        <span class="text-[10px]" id="lblHalo">5,000 pets</span>
+      </button>
+    </div>
+  </footer>
 
   <script>
-    // 30 Milestone Accessories (Unlocks every 10-30 points!)
-    const milestoneAccessories = [
-      { id: "acc_1", name: "Red Hat", icon: "🎩", requiredScore: 10 },
-      { id: "acc_2", name: "Cool Shades", icon: "🕶️", requiredScore: 20 },
-      { id: "acc_3", name: "Bowtie", icon: "👔", requiredScore: 30 },
-      { id: "acc_4", name: "Unicorn Friend", icon: "🦄", requiredScore: 40 },
-      { id: "acc_5", name: "Sparkles", icon: "✨", requiredScore: 50 },
-      { id: "acc_6", name: "Crown", icon: "👑", requiredScore: 60 },
-      { id: "acc_7", name: "Glasses", icon: "👓", requiredScore: 70 },
-      { id: "acc_8", name: "Shirt", icon: "👕", requiredScore: 80 },
-      { id: "acc_9", name: "Kitty Pal", icon: "🐱", requiredScore: 90 },
-      { id: "acc_10", name: "Star Power", icon: "🌟", requiredScore: 100 },
-      { id: "acc_11", name: "Goggles", icon: "🥽", requiredScore: 120 },
-      { id: "acc_12", name: "Safety Vest", icon: "🦺", requiredScore: 140 },
-      { id: "acc_13", name: "Puppy Pal", icon: "🐶", requiredScore: 160 },
-      { id: "acc_14", name: "Fire Aura", icon: "🔥", requiredScore: 180 },
-      { id: "acc_15", name: "Cap", icon: "🧢", requiredScore: 200 },
-      { id: "acc_16", name: "Silly Nose", icon: "🥸", requiredScore: 230 },
-      { id: "acc_17", name: "Karate Belt", icon: "🥋", requiredScore: 260 },
-      { id: "acc_18", name: "Fox Pal", icon: "🦊", requiredScore: 290 },
-      { id: "acc_19", name: "Lightning", icon: "⚡", requiredScore: 320 },
-      { id: "acc_20", name: "Grad Hat", icon: "🎓", requiredScore: 350 },
-      { id: "acc_21", name: "Bunny Pal", icon: "🐰", requiredScore: 390 },
-      { id: "acc_22", name: "Rainbow", icon: "🌈", requiredScore: 430 },
-      { id: "acc_23", name: "Helmet", icon: "🪖", requiredScore: 470 },
-      { id: "acc_24", name: "Panda Pal", icon: "🐼", requiredScore: 510 },
-      { id: "acc_25", name: "Diamond", icon: "💎", requiredScore: 550 },
-      { id: "acc_26", name: "Sun Hat", icon: "👒", requiredScore: 600 },
-      { id: "acc_27", name: "Dragon Pal", icon: "🐲", requiredScore: 650 },
-      { id: "acc_28", name: "Snowflake", icon: "❄️", requiredScore: 700 },
-      { id: "acc_29", name: "Ribbon", icon: "🎀", requiredScore: 800 },
-      { id: "acc_30", name: "Glitch Crown", icon: "👑✨", requiredScore: 1000 }
+    // Game State
+    let petCount = 0;
+    let isSoundMuted = false;
+    let audioCtx = null;
+    let currentBreed = 'yellow';
+    let activeAccessory = 'none';
+    let isPetting = false;
+    let lastPetTime = 0;
+
+    // Breed Configurations
+    const breedConfigs = {
+      yellow: {
+        name: "Classic Yellow Chick 🐥",
+        bodyFill: "#fde047",
+        bodyStroke: "#eab308",
+        wingFill: "#fde047",
+        wingStroke: "#eab308",
+        beakFill: "#f97316",
+        beakStroke: "#ea580c"
+      },
+      black: {
+        name: "Shadow Black Chick 🖤",
+        bodyFill: "#334155",
+        bodyStroke: "#0f172a",
+        wingFill: "#1e293b",
+        wingStroke: "#0f172a",
+        beakFill: "#d97706",
+        beakStroke: "#b45309"
+      },
+      gray: {
+        name: "Feather Gray Chick 🩶",
+        bodyFill: "#cbd5e1",
+        bodyStroke: "#64748b",
+        wingFill: "#94a3b8",
+        wingStroke: "#64748b",
+        beakFill: "#f97316",
+        beakStroke: "#ea580c"
+      },
+      white: {
+        name: "Snow White Chick ⚪",
+        bodyFill: "#ffffff",
+        bodyStroke: "#cbd5e1",
+        wingFill: "#f8fafc",
+        wingStroke: "#cbd5e1",
+        beakFill: "#fb923c",
+        beakStroke: "#ea580c"
+      }
+    };
+
+    // DOM Elements
+    const chickContainer = document.getElementById('chickContainer');
+    const petCountEl = document.getElementById('petCount');
+    const heartIcon = document.getElementById('heartIcon');
+    const progressBar = document.getElementById('progressBar');
+    const levelLabel = document.getElementById('levelLabel');
+    const breedNameTag = document.getElementById('breedNameTag');
+    const speechBubble = document.getElementById('speechBubble');
+    const particleContainer = document.getElementById('particleContainer');
+    const eyesNormal = document.getElementById('eyesNormal');
+    const eyesHappy = document.getElementById('eyesHappy');
+    const leftWing = document.getElementById('leftWing');
+    const rightWing = document.getElementById('rightWing');
+
+    // SVG elements for recoloring
+    const chickBody = document.getElementById('chickBody');
+    const chickHead = document.getElementById('chickHead');
+    const chickTuft = document.getElementById('chickTuft');
+    const leftWingPath = document.getElementById('leftWingPath');
+    const rightWingPath = document.getElementById('rightWingPath');
+    const beak = document.getElementById('beak');
+
+    // Speech Phrases
+    const happyPhrases = [
+      "Peep peep! 💛",
+      "I love pets! 🥰",
+      "So warm & soft! ✨",
+      "Chirp chirp! 🐥",
+      "You are my best friend! 💕",
+      "Tickles! 🤭",
+      "More pets please! 💖",
+      "Cheep cheep! 🐣"
     ];
 
-    let currentChick = "Oreo";
-    let chickScores = {
-      Oreo: parseInt(localStorage.getItem('chickScore_Oreo')) || 0,
-      Snowy: parseInt(localStorage.getItem('chickScore_Snowy')) || 0
-    };
-    let equippedAccessory = localStorage.getItem('equippedAccessory') || "";
-
-    function selectChick(name) {
-      currentChick = name;
-      document.getElementById("btnOreo").classList.toggle("active", name === "Oreo");
-      document.getElementById("btnSnowy").classList.toggle("active", name === "Snowy");
-      updateUI();
-      renderAccessories();
-    }
-
-    function petChick() {
-      // Add point without spending anything
-      chickScores[currentChick]++;
-      localStorage.setItem(`chickScore_${currentChick}`, chickScores[currentChick]);
-
-      // Tap bouncing animation
-      const sprite = document.getElementById("chickSprite");
-      sprite.style.transform = "scale(1.2) rotate(6deg)";
-      setTimeout(() => sprite.style.transform = "scale(1) rotate(0deg)", 100);
-
-      updateUI();
-      renderAccessories();
-    }
-
-    function equipItem(icon) {
-      if (equippedAccessory === icon) {
-        equippedAccessory = ""; // Take off if tapped again
-      } else {
-        equippedAccessory = icon;
+    // Audio Synthesizer via Web Audio API
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
       }
-      localStorage.setItem('equippedAccessory', equippedAccessory);
-      updateUI();
-      renderAccessories();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
     }
 
-    function updateUI() {
-      const currentScore = chickScores[currentChick];
-      document.getElementById("scoreDisplay").textContent = `${currentChick}'s Points: ${currentScore}`;
-      document.getElementById("accessoryLayer").textContent = equippedAccessory;
+    function playChirpSound() {
+      if (isSoundMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        const now = ctx.currentTime;
+        const startFreq = 2200 + Math.random() * 400;
+        const endFreq = 3100 + Math.random() * 300;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.08);
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } catch (e) {}
     }
 
-    function renderAccessories() {
-      const grid = document.getElementById("accessoriesGrid");
-      const currentScore = chickScores[currentChick];
-      grid.innerHTML = "";
+    function playUnlockSound() {
+      if (isSoundMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.15);
+        });
+      } catch (e) {}
+    }
 
-      milestoneAccessories.forEach(item => {
-        const isUnlocked = currentScore >= item.requiredScore;
-        const isEquipped = equippedAccessory === item.icon;
+    // Toggle Sound Button
+    const soundToggleBtn = document.getElementById('soundToggle');
+    const soundIcon = document.getElementById('soundIcon');
+    const soundLabel = document.getElementById('soundLabel');
 
-        const card = document.createElement("div");
-        card.className = `acc-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
+    soundToggleBtn.addEventListener('click', () => {
+      isSoundMuted = !isSoundMuted;
+      if (isSoundMuted) {
+        soundIcon.textContent = '🔇';
+        soundLabel.textContent = 'Muted';
+        soundToggleBtn.classList.replace('bg-yellow-100', 'bg-gray-100');
+      } else {
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = 'Sound On';
+        soundToggleBtn.classList.replace('bg-gray-100', 'bg-yellow-100');
+        playChirpSound();
+      }
+    });
 
-        card.innerHTML = `
-          <div style="font-size:26px;">${item.icon}</div>
-          <div style="font-size:12px; font-weight:bold; margin-top:4px;">${item.name}</div>
-          <div style="font-size:11px; color:#666;">${isUnlocked ? (isEquipped ? 'Equipped' : 'Unlocked!') : item.requiredScore + ' pts'}</div>
-        `;
+    // Select Breed Function
+    function selectBreed(breed) {
+      currentBreed = breed;
+      localStorage.setItem('chickBreed', breed);
 
-        if (isUnlocked) {
-          card.onclick = () => equipItem(item.icon);
-        }
+      const config = breedConfigs[breed];
 
-        grid.appendChild(card);
+      chickBody.setAttribute('fill', config.bodyFill);
+      chickBody.setAttribute('stroke', config.bodyStroke);
+      chickHead.setAttribute('fill', config.bodyFill);
+      chickHead.setAttribute('stroke', config.bodyStroke);
+      chickTuft.setAttribute('fill', config.bodyFill);
+      chickTuft.setAttribute('stroke', config.bodyStroke);
+
+      leftWingPath.setAttribute('fill', config.wingFill);
+      leftWingPath.setAttribute('stroke', config.wingStroke);
+      rightWingPath.setAttribute('fill', config.wingFill);
+      rightWingPath.setAttribute('stroke', config.wingStroke);
+
+      beak.setAttribute('fill', config.beakFill);
+      beak.setAttribute('stroke', config.beakStroke);
+
+      breedNameTag.textContent = config.name;
+
+      document.querySelectorAll('.breed-btn').forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-amber-500', 'bg-yellow-300');
       });
+
+      const btnId = 'btnBreed' + breed.charAt(0).toUpperCase() + breed.slice(1);
+      const activeBtn = document.getElementById(btnId);
+      if (activeBtn) {
+        activeBtn.classList.add('ring-2', 'ring-amber-500', 'bg-yellow-300');
+      }
+
+      speechBubble.textContent = `Changed to ${breed.toUpperCase()} chick! 🐥`;
+      playChirpSound();
     }
 
-    // Load initial screen state
-    updateUI();
-    renderAccessories();
+    // Handle Petting Interaction
+    function handlePet(e) {
+      if (e) e.preventDefault();
+
+      const now = Date.now();
+      if (now - lastPetTime < 50) return;
+      lastPetTime = now;
+
+      petCount++;
+      petCountEl.textContent = petCount.toLocaleString();
+      localStorage.setItem('chickPetCount', petCount);
+
+      heartIcon.classList.remove('pulse-heart');
+      void heartIcon.offsetWidth;
+      heartIcon.classList.add('pulse-heart');
+
+      playChirpSound();
+
+      chickContainer.classList.remove('chick-idle', 'chick-release');
+      chickContainer.classList.add('chick-pet');
+
+      eyesNormal.classList.add('hidden');
+      eyesHappy.classList.remove('hidden');
+
+      leftWing.classList.remove('wiggle-wing-left');
+      rightWing.classList.remove('wiggle-wing-right');
+      void leftWing.offsetWidth;
+      leftWing.classList.add('wiggle-wing-left');
+      rightWing.classList.add('wiggle-wing-right');
+
+      let clientX, clientY;
+      if (e && e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if (e && e.clientX) {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      } else {
+        const rect = chickContainer.getBoundingClientRect();
+        clientX = rect.left + rect.width / 2;
+        clientY = rect.top + rect.height / 3;
+      }
+
+      spawnParticles(clientX, clientY);
+      updateProgress();
+
+      if (petCount % 3 === 0) {
+        const randomPhrase = happyPhrases[Math.floor(Math.random() * happyPhrases.length)];
+        speechBubble.textContent = randomPhrase;
+        speechBubble.classList.add('scale-110');
+        setTimeout(() => speechBubble.classList.remove('scale-110'), 200);
+      }
+
+      clearTimeout(chickContainer.releaseTimer);
+      chickContainer.releaseTimer = setTimeout(() => {
+        chickContainer.classList.remove('chick-pet');
+        chickContainer.classList.add('chick-release');
+        eyesHappy.classList.add('hidden');
+        eyesNormal.classList.remove('hidden');
+
+        setTimeout(() => {
+          chickContainer.classList.remove('chick-release');
+          chickContainer.classList.add('chick-idle');
+        }, 150);
+      }, 200);
+    }
+
+    // Spawn Hearts & Sparkles Particles
+    function spawnParticles(x, y) {
+      const symbols = ['❤️', '💖', '✨', '💛', '🌸', '⭐', '💎'];
+      const count = Math.floor(Math.random() * 2) + 2;
+
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+
+        const dx = (Math.random() - 0.5) * 100;
+        const rot = (Math.random() - 0.5) * 60;
+
+        particle.style.setProperty('--dx', dx);
+        particle.style.setProperty('--rot', rot + 'deg');
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+
+        particleContainer.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, 1150);
+      }
+    }
+
+    // Update Progress & Unlock Accessories
+    function updateProgress(isInitialLoad = false) {
+      let percent = Math.min((petCount / 5000) * 100, 100);
+      progressBar.style.width = `${Math.max(percent, 1)}%`;
+
+      const silent = isInitialLoad;
+
+      // Unlock all items earned up to the current pet count
+      if (petCount >= 10) unlockAccessory('btnAccFlower', 'lblFlower', 'Unlocked', !silent);
+      if (petCount >= 25) unlockAccessory('btnAccBow', 'lblBow', 'Unlocked', !silent);
+      if (petCount >= 50) unlockAccessory('btnAccCrown', 'lblCrown', 'Unlocked', !silent);
+      if (petCount >= 100) unlockAccessory('btnAccGlasses', 'lblGlasses', 'Unlocked', !silent);
+      if (petCount >= 150) unlockAccessory('btnAccTopHat', 'lblTopHat', 'Unlocked', !silent);
+      if (petCount >= 200) unlockAccessory('btnAccHeadphones', 'lblHeadphones', 'Unlocked', !silent);
+      if (petCount >= 300) unlockAccessory('btnAccWizard', 'lblWizard', 'Unlocked', !silent);
+      if (petCount >= 500) unlockAccessory('btnAccGoggles', 'lblGoggles', 'Unlocked', !silent);
+      if (petCount >= 1000) unlockAccessory('btnAccDiamondCrown', 'lblDiamondCrown', 'Unlocked', !silent);
+      if (petCount >= 2000) unlockAccessory('btnAccAstronaut', 'lblAstronaut', 'Unlocked', !silent);
+      if (petCount >= 3000) unlockAccessory('btnAccUnicorn', 'lblUnicorn', 'Unlocked', !silent);
+      if (petCount >= 5000) unlockAccessory('btnAccHalo', 'lblHalo', 'Unlocked', !silent);
+
+      // Level title labels
+      if (petCount < 10) levelLabel.textContent = "Level 1: Happy Chick 🐥";
+      else if (petCount < 25) levelLabel.textContent = "Level 2: Flower Power 🌸";
+      else if (petCount < 50) levelLabel.textContent = "Level 3: Dapper Bowtie 🎀";
+      else if (petCount < 100) levelLabel.textContent = "Level 4: Royal Crown 👑";
+      else if (petCount < 150) levelLabel.textContent = "Level 5: Cool Glasses 🕶️";
+      else if (petCount < 200) levelLabel.textContent = "Level 6: Fancy Top Hat 🎩";
+      else if (petCount < 300) levelLabel.textContent = "Level 7: Music Headphones 🎧";
+      else if (petCount < 500) levelLabel.textContent = "Level 8: Wizard Chick 🧙‍♂️";
+      else if (petCount < 1000) levelLabel.textContent = "Level 9: Master Goggles 🥽";
+      else if (petCount < 2000) levelLabel.textContent = "Level 10: Diamond Royalty 💎";
+      else if (petCount < 3000) levelLabel.textContent = "Level 11: Space Explorer 🚀";
+      else if (petCount < 5000) levelLabel.textContent = "Level 12: Magical Unicorn 🦄";
+      else levelLabel.textContent = "Level 13: Divine Angel 😇";
+    }
+
+    function unlockAccessory(btnId, lblId, labelText, shouldPlaySound = true) {
+      const btn = document.getElementById(btnId);
+      const lbl = document.getElementById(lblId);
+
+      if (btn && btn.disabled) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-gray-100', 'border-gray-200');
+        btn.classList.add('bg-amber-100', 'border-amber-300', 'hover:bg-amber-200', 'text-amber-900');
+        if (lbl) lbl.textContent = labelText;
+        if (shouldPlaySound) playUnlockSound();
+      }
+    }
+
+    // Set Active Accessory
+    function setAccessory(accName) {
+      activeAccessory = accName;
+      localStorage.setItem('chickAccessory', accName);
+
+      const accIds = [
+        'accFlower', 'accBow', 'accCrown', 'accGlasses', 
+        'accTopHat', 'accHeadphones', 'accWizard', 'accGoggles',
+        'accDiamondCrown', 'accAstronaut', 'accUnicorn', 'accHalo'
+      ];
+      accIds.forEach(id => document.getElementById(id).classList.add('hidden'));
+
+      document.querySelectorAll('.acc-btn').forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-yellow-400', 'scale-105');
+      });
+
+      if (accName === 'flower') {
+        document.getElementById('accFlower').classList.remove('hidden');
+        document.getElementById('btnAccFlower').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Pretty flower! 🌸";
+      } else if (accName === 'bow') {
+        document.getElementById('accBow').classList.remove('hidden');
+        document.getElementById('btnAccBow').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "So fancy! 🎀";
+      } else if (accName === 'crown') {
+        document.getElementById('accCrown').classList.remove('hidden');
+        document.getElementById('btnAccCrown').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "I am a Royal Chick! 👑";
+      } else if (accName === 'glasses') {
+        document.getElementById('accGlasses').classList.remove('hidden');
+        document.getElementById('btnAccGlasses').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Too cool! 🕶️";
+      } else if (accName === 'topHat') {
+        document.getElementById('accTopHat').classList.remove('hidden');
+        document.getElementById('btnAccTopHat').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Good day, sir! 🎩";
+      } else if (accName === 'headphones') {
+        document.getElementById('accHeadphones').classList.remove('hidden');
+        document.getElementById('btnAccHeadphones').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Jammed out! 🎧";
+      } else if (accName === 'wizard') {
+        document.getElementById('accWizard').classList.remove('hidden');
+        document.getElementById('btnAccWizard').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Magic Peep! 🧙‍♂️";
+      } else if (accName === 'goggles') {
+        document.getElementById('accGoggles').classList.remove('hidden');
+        document.getElementById('btnAccGoggles').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Ready to splash! 🥽";
+      } else if (accName === 'diamondCrown') {
+        document.getElementById('accDiamondCrown').classList.remove('hidden');
+        document.getElementById('btnAccDiamondCrown').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "1,000 Pets Diamond Royalty! 💎";
+      } else if (accName === 'astronaut') {
+        document.getElementById('accAstronaut').classList.remove('hidden');
+        document.getElementById('btnAccAstronaut').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Ready for blast off! 🚀";
+      } else if (accName === 'unicorn') {
+        document.getElementById('accUnicorn').classList.remove('hidden');
+        document.getElementById('btnAccUnicorn').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Magical Horn Power! 🦄";
+      } else if (accName === 'halo') {
+        document.getElementById('accHalo').classList.remove('hidden');
+        document.getElementById('btnAccHalo').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Golden Angel Chick! 😇";
+      } else {
+        document.getElementById('btnAccNone').classList.add('ring-4', 'ring-yellow-400', 'scale-105');
+        speechBubble.textContent = "Natural style! 🐥";
+      }
+
+      playChirpSound();
+    }
+
+    // Event Listeners for Petting
+    chickContainer.addEventListener('mousedown', (e) => {
+      isPetting = true;
+      handlePet(e);
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPetting = false;
+    });
+
+    chickContainer.addEventListener('mousemove', (e) => {
+      if (isPetting) {
+        handlePet(e);
+      }
+    });
+
+    // Touch Event Listeners for Mobile / Touch Devices
+    chickContainer.addEventListener('touchstart', (e) => {
+      isPetting = true;
+      handlePet(e);
+    }, { passive: false });
+
+    chickContainer.addEventListener('touchmove', (e) => {
+      if (isPetting) {
+        handlePet(e);
+      }
+    }, { passive: false });
+
+    chickContainer.addEventListener('touchend', () => {
+      isPetting = false;
+    });
+
+    // Load saved game state from localStorage on page launch
+    function loadSavedGame() {
+      // Restore Pet Count
+      const savedCount = localStorage.getItem('chickPetCount');
+      if (savedCount !== null) {
+        petCount = parseInt(savedCount, 10) || 0;
+        petCountEl.textContent = petCount.toLocaleString();
+      }
+
+      // Restore Selected Breed
+      const savedBreed = localStorage.getItem('chickBreed');
+      if (savedBreed && breedConfigs[savedBreed]) {
+        selectBreed(savedBreed);
+      } else {
+        selectBreed('yellow');
+      }
+
+      // Unlock all earned achievements/accessories quietly
+      updateProgress(true);
+
+      // Restore Active Accessory
+      const savedAcc = localStorage.getItem('chickAccessory');
+      if (savedAcc) {
+        setAccessory(savedAcc);
+      } else {
+        setAccessory('none');
+      }
+    }
+
+    // Launch Game!
+    loadSavedGame();
+
   </script>
 </body>
 </html>
