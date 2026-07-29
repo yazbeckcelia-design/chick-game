@@ -174,34 +174,11 @@
     ];
 
     let currentChick = "Oreo";
-    
-    // Load Scores from LocalStorage
     let chickScores = {
       Oreo: parseInt(localStorage.getItem('chickScore_Oreo')) || 0,
       Snowy: parseInt(localStorage.getItem('chickScore_Snowy')) || 0
     };
-
-    // Load Equipped Accessories per Chick from LocalStorage
-    let equippedAccessories = {
-      Oreo: localStorage.getItem('equippedAccessory_Oreo') || "",
-      Snowy: localStorage.getItem('equippedAccessory_Snowy') || ""
-    };
-
-    // Load Unlocked Items List from LocalStorage
-    let unlockedAccessories = JSON.parse(localStorage.getItem('unlockedAccessories')) || [];
-
-    function saveAllData() {
-      // Save point scores
-      localStorage.setItem(`chickScore_Oreo`, chickScores.Oreo);
-      localStorage.setItem(`chickScore_Snowy`, chickScores.Snowy);
-
-      // Save equipped items
-      localStorage.setItem(`equippedAccessory_Oreo`, equippedAccessories.Oreo);
-      localStorage.setItem(`equippedAccessory_Snowy`, equippedAccessories.Snowy);
-
-      // Save list of unlocked items
-      localStorage.setItem('unlockedAccessories', JSON.stringify(unlockedAccessories));
-    }
+    let equippedAccessory = localStorage.getItem('equippedAccessory') || "";
 
     function selectChick(name) {
       currentChick = name;
@@ -211,40 +188,27 @@
       renderAccessories();
     }
 
-    function checkMilestoneUnlocks() {
-      const currentScore = chickScores[currentChick];
-      
-      milestoneAccessories.forEach(item => {
-        if (currentScore >= item.requiredScore && !unlockedAccessories.includes(item.id)) {
-          unlockedAccessories.push(item.id);
-        }
-      });
-
-      saveAllData(); // Save changes automatically whenever milestones are hit!
-    }
-
     function petChick() {
       // Add point without spending anything
       chickScores[currentChick]++;
+      localStorage.setItem(`chickScore_${currentChick}`, chickScores[currentChick]);
 
       // Tap bouncing animation
       const sprite = document.getElementById("chickSprite");
       sprite.style.transform = "scale(1.2) rotate(6deg)";
       setTimeout(() => sprite.style.transform = "scale(1) rotate(0deg)", 100);
 
-      checkMilestoneUnlocks();
       updateUI();
       renderAccessories();
     }
 
     function equipItem(icon) {
-      if (equippedAccessories[currentChick] === icon) {
-        equippedAccessories[currentChick] = ""; // Take off if tapped again
+      if (equippedAccessory === icon) {
+        equippedAccessory = ""; // Take off if tapped again
       } else {
-        equippedAccessories[currentChick] = icon;
+        equippedAccessory = icon;
       }
-      
-      saveAllData(); // Save changes automatically!
+      localStorage.setItem('equippedAccessory', equippedAccessory);
       updateUI();
       renderAccessories();
     }
@@ -252,17 +216,17 @@
     function updateUI() {
       const currentScore = chickScores[currentChick];
       document.getElementById("scoreDisplay").textContent = `${currentChick}'s Points: ${currentScore}`;
-      document.getElementById("accessoryLayer").textContent = equippedAccessories[currentChick];
+      document.getElementById("accessoryLayer").textContent = equippedAccessory;
     }
 
     function renderAccessories() {
       const grid = document.getElementById("accessoriesGrid");
+      const currentScore = chickScores[currentChick];
       grid.innerHTML = "";
 
       milestoneAccessories.forEach(item => {
-        // Check if unlocked either by saved list or current point score
-        const isUnlocked = unlockedAccessories.includes(item.id) || chickScores[currentChick] >= item.requiredScore;
-        const isEquipped = equippedAccessories[currentChick] === item.icon;
+        const isUnlocked = currentScore >= item.requiredScore;
+        const isEquipped = equippedAccessory === item.icon;
 
         const card = document.createElement("div");
         card.className = `acc-card ${isUnlocked ? 'unlocked' : 'locked'} ${isEquipped ? 'equipped' : ''}`;
@@ -281,11 +245,9 @@
       });
     }
 
-    // Load initial screen state and check unlocks on boot
-    checkMilestoneUnlocks();
+    // Load initial screen state
     updateUI();
     renderAccessories();
   </script>
 </body>
 </html>
-
